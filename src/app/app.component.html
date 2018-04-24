@@ -1,20 +1,174 @@
-<!--The content below is only a placeholder and can be replaced.-->
-<div style="text-align:center">
-  <h1>
-    Welcome to {{ title }}!
-  </h1>
-  <img width="300" alt="Angular Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTAgMjUwIj4KICAgIDxwYXRoIGZpbGw9IiNERDAwMzEiIGQ9Ik0xMjUgMzBMMzEuOSA2My4ybDE0LjIgMTIzLjFMMTI1IDIzMGw3OC45LTQzLjcgMTQuMi0xMjMuMXoiIC8+CiAgICA8cGF0aCBmaWxsPSIjQzMwMDJGIiBkPSJNMTI1IDMwdjIyLjItLjFWMjMwbDc4LjktNDMuNyAxNC4yLTEyMy4xTDEyNSAzMHoiIC8+CiAgICA8cGF0aCAgZmlsbD0iI0ZGRkZGRiIgZD0iTTEyNSA1Mi4xTDY2LjggMTgyLjZoMjEuN2wxMS43LTI5LjJoNDkuNGwxMS43IDI5LjJIMTgzTDEyNSA1Mi4xem0xNyA4My4zaC0zNGwxNy00MC45IDE3IDQwLjl6IiAvPgogIDwvc3ZnPg==">
-</div>
-<h2>Here are some links to help you start: </h2>
-<ul>
-  <li>
-    <h2><a target="_blank" rel="noopener" href="https://angular.io/tutorial">Tour of Heroes</a></h2>
-  </li>
-  <li>
-    <h2><a target="_blank" rel="noopener" href="https://github.com/angular/angular-cli/wiki">CLI Documentation</a></h2>
-  </li>
-  <li>
-    <h2><a target="_blank" rel="noopener" href="https://blog.angular.io/">Angular blog</a></h2>
-  </li>
-</ul>
+<div class="container">
+  <h2 class="jumbotron text-center text-white" [ngStyle]="{'background': '#78C2AD'}">Welcome to Google Map App</h2>
+  <form>
+    <div class="form-group">
+      <input type="search" class="form-control" placeholder="Enter location" #search required>
+      <button type="button" class="btn btn-primary btn-block" (click)="onSearch(search.value)">Search</button>
+    </div>
+  </form>
 
+  <div class="row">
+    <div class="card ml-3 w-47"  *ngFor="let marker of markerService.markers">
+      <div class="card-header alert-warning text-center">
+        <span class="badge badge-pill badge-light" style="font-size:1.5em; color:Tomato; float: left">{{marker.label}}</span>
+        <span style="font-size:1.5em" *ngIf="marker.formattedAddress">
+            {{marker.formattedAddress}}
+        </span>
+        <span style="font-size:1.5em" *ngIf="marker.name">
+            {{marker.name}}
+        </span>
+
+        <a href="#" style="font-size:1.5em; color:Tomato; float: right" (click)="deleteMarker(marker)">
+          <i class="fas fa-trash-alt" title="Delete Location and Marker"></i>
+        </a>
+      </div>
+
+      <div class="card-body" >
+        <div class="card-subtitle text-center text-muted" id="geometry">
+          <h6><strong>Latitude:</strong> {{marker.lat}}</h6>
+          <h6><strong>longitude:</strong> {{marker.lng}}</h6>
+        </div>
+        <hr />
+        <ul class="card-text" *ngFor="let addressComponent of marker.addressComponents">
+          <li>
+            <strong>{{addressComponent.types[0]}}:</strong>
+          {{addressComponent.long_name}}
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <br/>
+
+<div class="row">
+  <div class="col-md-12">
+    <div class="map">
+      <agm-map
+        [latitude]="startLat"
+        [longitude]="startLng"
+        [zoom]="zoom"
+        [disableDefaultUI]="false"
+        (mapClick)="onClickMapAddMarker($event)">
+          <agm-marker *ngFor="let m of markerService.markers; let i = index"
+            [latitude]="m.lat"
+            [longitude]="m.lng"
+            [label]="m.label"
+            [markerDraggable]="m.draggable"
+            (dragEnd)="markerDragEnd(m, $event)"
+            (markerClick)="clickedMarker(m, i)">
+            <agm-info-window>
+              <div class="card">
+                <h6 class="card-header alert-primary text-white text-center">
+
+                  <div *ngIf="m.name; else formattedAddress">
+                    {{m.name}}
+                  </div>
+                  <ng-template #formattedAddress>
+                    {{m.formattedAddress}}
+                  </ng-template>
+
+                </h6>
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item"><b>Latitude:</b> {{m.lat}}</li>
+                  <li class="list-group-item"><b>Longitude:</b> {{m.lng}}</li>
+                </ul>
+              </div>
+              <div class="btn btn-sm btn-block">
+                <a href="#" style="font-size:1.2em; float: right" (click)="deleteMarker(m)">
+                    <i class="fas fa-trash-alt" title="Delete Marker"></i>
+                </a>
+              </div>
+            </agm-info-window>
+          </agm-marker>
+      </agm-map>
+    </div>
+  </div>
+</div>
+
+<div>
+  <button type="button" class="btn btn-danger btn-block"
+  *ngIf="markerService.markers.length>0"
+  (click)="clearAllMarkers()">Clear Markers</button>
+</div>
+<br />
+
+<div class="row">
+  <div class="col-md-12">
+    <form novalidate
+        class="card bg-light mb-3"
+        #f="ngForm"
+        (ngSubmit)="onSubmitCreateMarker()">
+      <div class="card card-block">
+        <div class="card-body">
+          <h4 class="card-title text-warning">Create A Marker</h4>
+            <div class="input-group mb-3">
+              <input type="text"
+                class="form-control"
+                placeholder="Enter name"
+                [ngClass]= '{
+                  "is-invalid": name.invalid && (name.dirty || name.touched),
+                  "is-valid": name.valid && (name.dirty || name.touched)
+                }'
+                name="name"
+                [(ngModel)]="model.name"
+                required
+                #name="ngModel">
+              <div class="input-group-append" *ngIf="name.value">
+                <button class="btn btn-outline-success" type="button" (click)="getCoords(name.value)">Get Coordinates</button>
+              </div>
+              <div class="invalid-feedback"
+                    *ngIf="name.errors && (name.dirty || name.touched)">
+                <span *ngIf="name.errors.required">Name is required</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <input type="text"
+                    class="form-control"
+                    placeholder="Enter latitude"
+                    [ngClass]= '{
+                      "is-invalid": lat.invalid && (lat.dirty || lat.touched),
+                      "is-valid": lat.valid && (lat.dirty || lat.touched)
+                    }'
+                    name="lat"
+                    [(ngModel)]="model.lat"
+                    required
+                    #lat="ngModel">
+              <div class="invalid-feedback"
+                *ngIf="lat.errors && (lat.dirty || lat.touched)">
+                <p *ngIf="lat.errors.required">Latitude is required</p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <input type="text"
+                    class="form-control"
+                    placeholder="Enter longitude"
+                    [ngClass]= '{
+                      "is-invalid": lng.invalid && (lng.dirty || lng.touched),
+                      "is-valid": lng.valid && (lng.dirty || lng.touched)
+                    }'
+                    name="lng"
+                    [(ngModel)]="model.lng"
+                    required
+                    #lng="ngModel">
+              <div class="invalid-feedback"
+                *ngIf="lng.errors && (lng.dirty || lng.touched)">
+                <p *ngIf="lng.errors.required">Longitude is required</p>
+              </div>
+            </div>
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox"
+                (change)="toggleDraggable($event)">
+              <label class="form-check-label">
+                Draggable
+              </label>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-warning text-white" [disabled]="f.invalid">Create</button>
+      </div>
+      </form>
+    </div>
+  </div>
+</div>
